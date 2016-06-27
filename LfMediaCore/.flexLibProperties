@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<flexLibProperties includeAllClasses="true" useMultiPlatformConfig="false" version="3">
+  <includeClasses>
+    <classEntry path="lf.media.core.video.ILfVideo"/>
+    <classEntry path="lf.media.core.video.LfNomalVideo"/>
+    <classEntry path="lf.media.core.video.CallbackData"/>
+    <classEntry path="lf.media.core.video.CallbackType"/>
+    <classEntry path="lf.media.core.video.MediaType"/>
+    <classEntry path="lf.media.core.video.LfP2pVideo"/>
+    <classEntry path="lf.media.core.component.label.LfLabelList"/>
+    <classEntry path="lf.media.core.component.slider.LfSliderDot"/>
+    <classEntry path="lf.media.core.component.slider.LfSlider"/>
+    <classEntry path="lf.media.core.util.Util"/>
+    <classEntry path="lf.media.core.data.ValidateVO"/>
+    <classEntry path="lf.media.core.data.LiveCoreData"/>
+    <classEntry path="lf.media.core.data.PlayOption"/>
+    <classEntry path="lf.media.core.data.StatusData"/>
+    <classEntry path="lf.media.core.data.StatusConfig"/>
+    <classEntry path="lf.media.core.event.LfEvent"/>
+    <classEntry path="lf.media.core.view.LfCoreVideo"/>
+    <classEntry path="lf.media.core.data.ErrorCode"/>
+    <classEntry path="lf.media.core.data.LiveCoreDataPublic"/>
+    <classEntry path="lf.media.core.data.LogData"/>
+    <classEntry path="lf.media.core.data.Config"/>
+    <classEntry path="lf.media.core.data.LiveCoreDataV2"/>
+  </includeClasses>
+  <includeResources/>
+  <namespaceManifests/>
+</flexLibProperties>
