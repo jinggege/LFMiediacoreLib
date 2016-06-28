@@ -9,6 +9,8 @@ package lf.media.core.video
 	import flash.net.NetConnection;
 	import flash.net.NetStream;
 	
+	import lf.media.core.control.stream.LFStream;
+	
 	public class LFVideo2 extends Sprite implements ILfVideo
 	{
 		
@@ -18,6 +20,7 @@ package lf.media.core.video
 		public function LFVideo2(callback:Function)
 		{
 			_callback = callback;
+			_lfStream = new LFStream();
 			super();
 		}
 		
@@ -42,6 +45,8 @@ package lf.media.core.video
 			_netStartm.addEventListener(StatusEvent.STATUS,netStartHandler);
 			_netStartm.addEventListener(IOErrorEvent.IO_ERROR,ioerrorHandler);
 			
+			_lfStream.setNetStream( _netStartm);
+			
 			_creatComplete = true;
 		}
 		
@@ -49,11 +54,14 @@ package lf.media.core.video
 		
 		public function play(url:String):void
 		{
-			try{
-				_netStartm.play(url);
+			//try{
+				_netStartm.play(null);
+				_lfStream.reset();
+				_lfStream.start(url);
 				_video.attachNetStream(_netStartm);
-			}catch(err:Error){
-			}
+			//}catch(err:Error){
+				//trace();
+			//}
 			
 		}
 		
@@ -130,6 +138,13 @@ package lf.media.core.video
 		{
 			_creatComplete = false;
 			
+			
+			if(_lfStream){
+				_lfStream.destroy();
+				_lfStream = null;
+			}
+			
+			
 			if(_conn != null){
 				_conn.close();
 				_conn = null;
@@ -163,6 +178,8 @@ package lf.media.core.video
 		private var _video:Video;
 		
 		private var _creatComplete:Boolean = false;
+		
+		private var _lfStream:LFStream;
 		
 		
 		
