@@ -26,11 +26,14 @@ package lf.media.core.control.stream
 				return false;
 			}
 			
+			_buffer.position = 0;
+			
 			if(_buffer.bytesAvailable<_at.headLen){
 				_sourceB.readBytes(_buffer,_buffer.bytesAvailable,_at.headLen-_buffer.bytesAvailable);
 			}
-			var fStr:String = _buffer[0].toString(16);
-			return fStr == "8";
+			var flag:Boolean = _buffer.readByte() == 0x08;
+			_buffer.position = 0;
+			return flag;
 		}
 		
 		
@@ -41,6 +44,11 @@ package lf.media.core.control.stream
 			if(_buffer.bytesAvailable< _at.tagLen){
 				
 				if(_sourceB.bytesAvailable < _at.tagLen){
+					
+					//_sourceB.readBytes(b,0,_sourceB.bytesAvailable);
+					//b.clear();
+					//b = null;
+					//_buffer.clear();
 					_at.data = null;
 					return _at;
 				}
@@ -50,7 +58,9 @@ package lf.media.core.control.stream
 			_buffer.position = 0;
 			_buffer.readBytes(b,0,_at.tagLen);
 			_at.data = b;
-			_buffer.position = _at.tagLen;
+			//_buffer.position = _at.tagLen;
+			_buffer.clear();
+			_buffer.position = 0;
 			return _at;
 		}
 		

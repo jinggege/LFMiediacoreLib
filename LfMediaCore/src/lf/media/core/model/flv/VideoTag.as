@@ -11,8 +11,8 @@ package lf.media.core.model.flv
 		public var data:ByteArray = null;
 		public  const headLen:int = 11;
 		
-		//17 关键帧   27普通帧
-		public var keyType:String = "27";  
+		//0x17 关键帧   0x27普通帧
+		public var keyType:uint = 0x27;  
 		
 		private var _size:int = 0;
 		

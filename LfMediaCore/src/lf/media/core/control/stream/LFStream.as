@@ -34,11 +34,9 @@ package lf.media.core.control.stream
 		
 		
 		private const MAX_BUFFER:int =3;
-		//private const ClearCatchLimitSize:int = 50000;
-		//private const ClearCathLimitBufferLen:int = 3;
 		
 		private const ClearCatchLimitSize:int = 20000;
-		private const ClearCathLimitBufferLen:int = 6;  //7  最优
+		private const ClearCathLimitBufferLen:int = 2;  //7  最优
 		
 		private const firstRead:int = 1;
 		
@@ -75,7 +73,6 @@ package lf.media.core.control.stream
 			this.reset();
 			_urlStream.load(new URLRequest(url))
 			_tiker.start();
-			_isFrist = true;
 		}
 		
 		
@@ -84,6 +81,7 @@ package lf.media.core.control.stream
 		}
 		
 		private function progressHandler(event:ProgressEvent):void{
+			trace(" init data===",_urlStream.bytesAvailable);
 			//this.dispatchEvent(new Event(E_STREAM_PROGRESS));
 		}
 		
@@ -111,6 +109,9 @@ package lf.media.core.control.stream
 		}
 		
 		
+		
+		private var _once:Boolean = false;
+		
 		private function rendHandler(event:TimerEvent):void{
 			if(_netStream == null) return;
 			
@@ -124,11 +125,10 @@ package lf.media.core.control.stream
 			
 			if(_netStream.bufferLength > ClearCathLimitBufferLen){
 				var dt:int = 0
-				while(dt<1){
+				while(dt<2){
 					clearAudioCatch();
 					clearVideoCatch()
 					dt++;
-					
 					trace("=============丢数据");
 					trace("=============丢数据");
 					trace("=============丢数据");
@@ -139,24 +139,32 @@ package lf.media.core.control.stream
 				
 			}
 			
+			
+			if(!_once){
+				//_buffer.position = 0;
+				//_buffer.writeByte(1);
+				//_buffer.position = 0;
+				//_once = true;
+			}
 			
 			
 			var _t:int = 0;
 			var forCount:int = 0;
 			forCount = _cc>50? 40 : 2;
 			
+			trace("=====AV=",_urlStream.bytesAvailable);
 			while(_t<forCount){
 				var isA:Boolean = appendAudioTag();
+				trace("A=",_urlStream.bytesAvailable);
 				var isV:Boolean = appendVideoTag();
-				
+				trace("V=",_urlStream.bytesAvailable);
 				if(!isA && !isV){
-					reStart(_url);
-					return;
+					clearBadTag();
+					//this.reStart(_url);
 				}
-				
 				_t++;
-				
 			}
+			
 			 
 			 trace("buffer len=",_netStream.bufferLength);
 			 trace("======================",_urlStream.bytesAvailable);
@@ -205,7 +213,9 @@ package lf.media.core.control.stream
 			if(isVideo){
 				var vt:VideoTag = _videoTagC.tagData;
 				if(vt.data){
+					if(_netStream.bufferLength<ClearCathLimitBufferLen){
 						_netStream.appendBytes(vt.data);
+					}
 						vt.destroy();
 						vt = null;
 						_buffer.clear();
@@ -222,8 +232,8 @@ package lf.media.core.control.stream
 				var vt:VideoTag = _videoTagC.tagData;
 				//vt.print();
 				if(vt.data){
-					if(vt.keyType=="17"){
-						_netStream.appendBytes(vt.data);
+					if(vt.keyType==0x17){
+						//_netStream.appendBytes(vt.data);
 					}
 					vt.destroy();
 					vt = null;
@@ -254,8 +264,8 @@ package lf.media.core.control.stream
 			if(isVideo){
 				var vt:VideoTag = _videoTagC.tagData;
 				if(vt.data){
-					if(vt.keyType=="17"){
-						_netStream.appendBytes(vt.data);
+					if(vt.keyType==0x17){
+						//_netStream.appendBytes(vt.data);
 					}
 					vt.destroy();
 					_buffer.clear();
@@ -265,58 +275,50 @@ package lf.media.core.control.stream
 		}
 		
 		
-		
+		/**
+		 * 清除坏包
+		 */
 		private function clearBadTag():void{
 			
-			trace("------------------------------------------------------clear start");
+			trace("xxxxxxxxxx 脏数据");
+			trace("xxxxxxxxxx 脏数据");
+			trace("xxxxxxxxxx 脏数据");
+			trace("xxxxxxxxxx 脏数据");
 			
-			_buffer.clear();
-			var start:Boolean = true;
+			
 			var index:int = 0;
-			while(start){
+			while(index<_buffer.length){
+				_buffer.position = index;
 				
-				if(_buffer.bytesAvailable < index+1){
-					var needLen:int = index+1-_buffer.bytesAvailable;
-					if(_urlStream.bytesAvailable < needLen){
-						_urlStream.readBytes(_buffer,_buffer.bytesAvailable,_urlStream.bytesAvailable);
+				if(_buffer.readByte()==0x09){
+					
+					if(index+11 >_buffer.length){
+						_urlStream.readBytes(_buffer,_buffer.length,(index+11-_buffer.length+1));
+					}
+					
+					
+					var frameType:uint = 0;
+					_buffer.position = index+11;
+					frameType = _buffer.readByte();
+					_buffer.position = index;
+					
+					if(frameType==0x17 || frameType==0x27){
+						var b:ByteArray = new ByteArray();
+						_buffer.position = index;
+						_buffer.readBytes(b,0,_buffer.length-index);
 						_buffer.clear();
-						start = false;
+						b.position = 0;
+						b.readBytes(_buffer,0,b.bytesAvailable);
+						b.clear();
+						b = null;
 						return;
-					}
-					_urlStream.readBytes(_buffer,_buffer.bytesAvailable,needLen);
-				}
-				
-				if(_buffer[index].toString(16) == "9"){
-					
-					if(_buffer.bytesAvailable < index+11){
-						if(_urlStream.bytesAvailable < index+11){
-							_urlStream.readBytes(_buffer,_buffer.bytesAvailable,_urlStream.bytesAvailable);
-							_buffer.clear();
-							start = false;
-							return;
-						}
-						
-						_urlStream.readBytes(_buffer,_buffer.bytesAvailable,index+11);
-					}
-					
-					
-					var frameType:String = "";
-					try{
-						frameType = _buffer[index+11].toString(16);
-						trace("frame type=",frameType);
-					}catch(e:Error){}
-					if(frameType == "17" || frameType=="27"){
-						var size:int = (_buffer[index+1] << 16) | (_buffer[index+2] << 8) | (_buffer[index+3]);  
-						_urlStream.readBytes(_buffer,_buffer.bytesAvailable,size);
-						_buffer.clear();
-						start = false;
 					}
 				}
 				
 				index++;
+				
 			}
 			
-			trace("------------------------------------------------------clear end");
 		}
 		
 		
@@ -330,6 +332,7 @@ package lf.media.core.control.stream
 		
 		
 		public function reset():void{
+			_isFrist = true;
 			_tiker.stop();
 			_buffer.clear();
 			if(_urlStream.connected){
