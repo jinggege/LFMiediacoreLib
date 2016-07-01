@@ -17,16 +17,22 @@ package lf.media.core.control.stream
 			this._sourceB = sourceB;
 		}
 		
-		public function get  isFlvHead():Boolean{
-			var str:String = "";
+		/**return 0:是Flv头   1：不是FLV 头   2：数据不够*/
+		public function get  isFlvHead():int{
+			if(_sourceB.bytesAvailable<3)	{
+				return 2;
+			}		
+			
 			if(_buffer.bytesAvailable<3){
 				_sourceB.readBytes(_buffer,_buffer.bytesAvailable,3-_buffer.bytesAvailable);
 			}
-			
-			str += _buffer[0].toString(16);
-			str += _buffer[1].toString(16);
-			str += _buffer[2].toString(16);
-			return str == "464c56";
+			_buffer.position = 0;
+			var str:String = "";
+			str += _buffer.readByte().toString(16);
+			str += _buffer.readByte().toString(16);
+			str += _buffer.readByte().toString(16);
+			_buffer.position = 0;
+			return str == "464c56"? 0:1;
 		}
 		
 		
@@ -43,8 +49,23 @@ package lf.media.core.control.stream
 			_buffer.readBytes(b,0,ht.size);
 			ht.data = b;
 			_buffer.position = ht.size;
+			//print();
 			return ht;
 		}
+		
+		
+		
+		public function print():void{
+			var str:String = "head data=";
+			for(var i:int=0; i<_buffer.length; i++){
+				str += _buffer[i].toString(16)+"|";
+			}
+			_buffer.position = 0;
+			trace(str);
+			
+		}
+		
+		
 		
 		
 		private var _sourceB:URLStream = null;

@@ -33,7 +33,7 @@ package lf.media.core.control.stream
 		public static const E_STREAM_PROGRESS:String = "E_STREAM_PROGRESS";
 		
 		
-		private const MAX_BUFFER:int =3;
+		private const MAX_BUFFER:int =1.5;
 		
 		private const ClearCatchLimitSize:int = 20000;
 		private const ClearCathLimitBufferLen:int = 2;  //7  最优
@@ -65,7 +65,6 @@ package lf.media.core.control.stream
 			_metdataC.init(_urlStream,_buffer);
 			_audioTagC.init(_urlStream,_buffer);
 			_videoTagC.init(_urlStream,_buffer);
-			_isFrist = true;
 		}
 		
 		
@@ -73,6 +72,7 @@ package lf.media.core.control.stream
 			this.reset();
 			_urlStream.load(new URLRequest(url))
 			_tiker.start();
+			_delayT.start();
 		}
 		
 		
@@ -117,21 +117,16 @@ package lf.media.core.control.stream
 			
 			inCatch(firstRead);
 			if(_urlStream.bytesAvailable<11) return;
-			if(_isFrist){
-				appendFlvHead();
-				appendMetdata();
-				_isFrist = false;
-			}
+			
+			appendFlvHead();
+			appendMetdata();
 			
 			if(_netStream.bufferLength > ClearCathLimitBufferLen){
 				var dt:int = 0
-				while(dt<2){
+				while(dt<3){
 					clearAudioCatch();
 					clearVideoCatch()
 					dt++;
-					trace("=============丢数据");
-					trace("=============丢数据");
-					trace("=============丢数据");
 					trace("=============丢数据");
 					trace("=============丢数据");
 					trace("=============丢数据");
@@ -152,15 +147,13 @@ package lf.media.core.control.stream
 			var forCount:int = 0;
 			forCount = _cc>50? 40 : 2;
 			
-			trace("=====AV=",_urlStream.bytesAvailable);
 			while(_t<forCount){
-				var isA:Boolean = appendAudioTag();
-				trace("A=",_urlStream.bytesAvailable);
-				var isV:Boolean = appendVideoTag();
-				trace("V=",_urlStream.bytesAvailable);
-				if(!isA && !isV){
-					clearBadTag();
-					//this.reStart(_url);
+				var aFlag:int = appendAudioTag();
+				var vFlag:int = appendVideoTag();
+				if(aFlag==1 && vFlag==1){
+					if(_urlStream.bytesAvailable>100){
+						clearBadTag();
+					}
 				}
 				_t++;
 			}
@@ -173,49 +166,54 @@ package lf.media.core.control.stream
 		
 		
 		private function appendFlvHead():void{
-			var isHead:Boolean = _flvHeadC.isFlvHead;
-			if(isHead){
+			var headFlag:int = _flvHeadC.isFlvHead;
+			if(headFlag==0){
 				var ht:HeadTag = _flvHeadC.tagData;
 				_netStream.appendBytes(ht.data);
 				ht.destroy();
 				_buffer.clear();
+				ht = null;
 			}
 		}
 		
 		
 		private function appendMetdata():void{
-			var isMetdata:Boolean = _metdataC.isMetdata;
-			if(isMetdata){
+			var mFlag:int = _metdataC.isMetdata;
+			if(mFlag==0){
 				var mt:MetdataTag = _metdataC.tagData;
 				_netStream.appendBytes(mt.data);
 				mt.destroy();
 				_buffer.clear();
+				mt = null;
 			}
 		}
 		
-		private function appendAudioTag():Boolean{
-			var isAudio:Boolean = _audioTagC.isAudio;
-			if(isAudio){
+		private function appendAudioTag():int{
+			var aFlag:int = _audioTagC.isAudio;
+			if(aFlag==0){
 				var at:AudioTag = _audioTagC.tagData;
 				if( at.data){
-					_netStream.appendBytes(at.data);
+					//if(_netStream.bufferLength>MAX_BUFFER){
+						_netStream.appendBytes(at.data);
+					//}
 					at.destroy();
 					_buffer.clear();
 				}
+				at = null;
 			}
 			
-			return isAudio;
+			return aFlag;
 		}
 		
 		
-		private function appendVideoTag():Boolean{
-			var isVideo:Boolean = _videoTagC.isVideo;
-			if(isVideo){
+		private function appendVideoTag():int{
+			var vFlag:int = _videoTagC.isVideo;
+			if(vFlag==0){
 				var vt:VideoTag = _videoTagC.tagData;
 				if(vt.data){
-					if(_netStream.bufferLength<ClearCathLimitBufferLen){
+					//if(_netStream.bufferLength<MAX_BUFFER){
 						_netStream.appendBytes(vt.data);
-					}
+					//}
 						vt.destroy();
 						vt = null;
 						_buffer.clear();
@@ -223,17 +221,17 @@ package lf.media.core.control.stream
 				
 			}
 			
-			return isVideo;
+			return vFlag;
 		}
 		
 		private function appendKeyVideoTag():void{
-			var isVideo:Boolean = _videoTagC.isVideo;
-			if(isVideo){
+			var vFlag:int = _videoTagC.isVideo;
+			if(vFlag==0){
 				var vt:VideoTag = _videoTagC.tagData;
 				//vt.print();
 				if(vt.data){
 					if(vt.keyType==0x17){
-						//_netStream.appendBytes(vt.data);
+						_netStream.appendBytes(vt.data);
 					}
 					vt.destroy();
 					vt = null;
@@ -243,8 +241,8 @@ package lf.media.core.control.stream
 		}
 		
 		private function clearAudioCatch():void{
-			var isAudio:Boolean = _audioTagC.isAudio;
-			if(isAudio){
+			var aFlag:int = _audioTagC.isAudio;
+			if(aFlag==0){
 				var at:AudioTag = _audioTagC.tagData;
 				if( at.data){
 					at.destroy();
@@ -260,8 +258,8 @@ package lf.media.core.control.stream
 		 * 清除视频缓冲 ：只清除普通帧
 		 */
 		private function clearVideoCatch():void{
-			var isVideo:Boolean = _videoTagC.isVideo;
-			if(isVideo){
+			var vFlag:int = _videoTagC.isVideo;
+			if(vFlag==0){
 				var vt:VideoTag = _videoTagC.tagData;
 				if(vt.data){
 					if(vt.keyType==0x17){
@@ -281,11 +279,6 @@ package lf.media.core.control.stream
 		private function clearBadTag():void{
 			
 			trace("xxxxxxxxxx 脏数据");
-			trace("xxxxxxxxxx 脏数据");
-			trace("xxxxxxxxxx 脏数据");
-			trace("xxxxxxxxxx 脏数据");
-			
-			
 			var index:int = 0;
 			while(index<_buffer.length){
 				_buffer.position = index;
@@ -332,8 +325,8 @@ package lf.media.core.control.stream
 		
 		
 		public function reset():void{
-			_isFrist = true;
 			_tiker.stop();
+			_delayT.stop();
 			_buffer.clear();
 			if(_urlStream.connected){
 				_urlStream.close();
@@ -376,7 +369,6 @@ package lf.media.core.control.stream
 		private var _audioTagC:AudioTagC = new AudioTagC();
 		private var _videoTagC:VideoTagC = new VideoTagC();
 		private var _sourceB:ByteArray = new ByteArray();
-		private var _isFrist:Boolean = true;
 		private var _url:String = "";
 		
 		
