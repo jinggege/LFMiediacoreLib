@@ -4,6 +4,7 @@ package lf.media.core.data
 	import flash.events.EventDispatcher;
 	import flash.events.IOErrorEvent;
 	import flash.events.SecurityErrorEvent;
+	import flash.utils.getTimer;
 	
 	import lf.media.core.component.loader.LFUrlLoader;
 	import lf.media.core.event.LfEvent;
@@ -45,6 +46,11 @@ package lf.media.core.data
 			_initOption = initOption;
 		}
 		
+		/**拉去url 所用时间*/
+		public function get pullurlTime():int{
+			return _purlT;
+		}
+		
 		
 		public function play(playOption:PlayOption):void{
 			_playOption           = playOption;
@@ -66,12 +72,15 @@ package lf.media.core.data
 			reqUrl+= "&sdkversion=" + playOption.sdkversion;
 			reqUrl+= "&playerversion=" + "3.2.0";
 			Console.log("get play list=>",reqUrl);
+			_purlT = new Date().getTime();
 			_reqGetplayList.request(reqUrl,3,respGetplaylist);
 		}
 		
 		
 		
 		private function respGetplaylist(info:Object):void {
+			_purlT = new Date().getTime() - _purlT;
+			
 			var statusData:StatusData = new StatusData();
 			
 			switch(info["type"]){
@@ -293,6 +302,8 @@ package lf.media.core.data
 		private var _httpCode:int                            = 0;
 		private var _tryCount:int                             = 0;
 		private var _initOption:InitOption              = null;           
+		/**拉取play url 所用时间*/
+		private var _purlT:int = 0;
 		
 		
 		

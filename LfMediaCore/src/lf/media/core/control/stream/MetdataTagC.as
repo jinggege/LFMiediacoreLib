@@ -44,6 +44,8 @@ package  lf.media.core.control.stream
 			
 			_buffer.position = 0;
 			if(_buffer.bytesAvailable< _mt.tagLen){
+				
+				//var len:int = _mt.tagLen-_buffer.bytesAvailable	;	
 				_sourceB.readBytes(_buffer,_buffer.bytesAvailable,_mt.tagLen-_buffer.bytesAvailable);
 			}
 			

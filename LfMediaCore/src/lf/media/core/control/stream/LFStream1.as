@@ -21,7 +21,7 @@ package lf.media.core.control.stream
 	import lf.media.core.model.flv.VideoTag;
 	
 	
-	public class LFStream extends EventDispatcher
+	public class LFStream1 extends EventDispatcher
 	{
 		/**事件:IO 错误*/
 		public static const E_ERR_IO:String=  "E_ERR_IO";
@@ -42,7 +42,7 @@ package lf.media.core.control.stream
 		private var _delayT:Timer = new Timer(0);
 		private var _restartT:Timer = new Timer(2000);
 		
-		public function LFStream(target:IEventDispatcher=null)
+		public function LFStream1(target:IEventDispatcher=null)
 		{
 			super(target);
 			_urlStream.addEventListener(ProgressEvent.PROGRESS,progressHandler);
@@ -56,16 +56,13 @@ package lf.media.core.control.stream
 		
 		
 		public function start(url:String):void{
+			_pt = 0;
 			_url = url;
+			_headTime =new Date().getTime();
 			_urlStream.load(new URLRequest(url))
 			_tiker.start();
 			_delayT.start();
 			_restartT.start();
-			
-			_flvHeadC.init(_urlStream,_buffer);
-			_metdataC.init(_urlStream,_buffer);
-			_audioTagC.init(_urlStream,_buffer);
-			_videoTagC.init(_urlStream,_buffer);
 		}
 		
 		
@@ -86,9 +83,17 @@ package lf.media.core.control.stream
 			return _urlStream.bytesAvailable;
 		}
 		
+		/**从发出请求 到拉到数据所用时间 (单位:ms)*/
+		public function get pullStreamTime():int{
+			return _pt;
+		}
+		
+		
+		private var _pt:int = 0;
 		private function progressHandler(event:ProgressEvent):void{
-			//trace(" init data===",_urlStream.bytesAvailable);
-			//this.dispatchEvent(new Event(E_STREAM_PROGRESS));
+			if(_pt==0){
+				_pt = new Date().getTime() - _headTime;
+			}
 		}
 		
 		
@@ -112,65 +117,53 @@ package lf.media.core.control.stream
 			_delay = _delay==0? getTimer() : _delay;
 			_cc = getTimer() - _delay;
 			_delay = getTimer();
+			
 		}
 		
 		
+		
+		private var _bec:int = 0;
 		private function restartCheckHandler(event:TimerEvent):void{
-			if(_netStream.bufferLength<0.5 && _urlStream.bytesAvailable>5000){
-				reStart(_url);
+			if(_netStream.bufferLength == 0){
+				
+				if(_bec>15){
+					reStart(_url);
+					_bec = 0;
+				}
+				
+				_bec++;
+			}else{
+				_bec = 0;
+			}
+			
+			
+			
+			
+			if(_netStream.bufferLength>10){
+				_netStream.seek(_netStream.time+0.5);
 			}
 		}
 		
 		
-		private var _tt:uint = 0;
 		private function rendHandler(event:TimerEvent):void{
 			if(_netStream == null) return;
 			
-			inCatch(firstRead);
-			if(_urlStream.bytesAvailable<11) return;
-			
-			appendFlvHead();
-			appendMetdata();
-			
-			/*
-			
 			if(_netStream.bufferLength > MAX_LEN){
-				var dt:int = 0
-				while(dt<2){
-					if(_urlStream.bytesAvailable>5000){
-						clearAudioCatch();
-						clearVideoCatch()
-						trace("clear tag=",getTimer());
-					}
-					dt++;
-				}
-			}
-			*/
-			
-			if(_netStream.bufferLength > MAX_LEN){
-				_netStream.bufferTimeMax = 1.5;
+				_netStream.bufferTimeMax = 1.8;
 			}
 			
 			
+			var t:int = _cc>50? 40:2;
 			
-			var _t:int = 0;
-			var forCount:int = 0;
-			forCount = _cc>50? 40 : 3;
-			
-			while(_t<forCount){
-				var aFlag:int = appendAudioTag();
-				var vFlag:int = appendVideoTag();
-				if(aFlag==1 && vFlag==1){
-					if(_urlStream.bytesAvailable>100){
-						clearBadTag();
-					}
-				}
-				_t++;
+			while(t>0){
+				var b:ByteArray = new ByteArray();
+				_urlStream.readBytes(b,0,_urlStream.bytesAvailable);
+				_netStream.appendBytes(b);
+				b.clear();
+				b=null;
+				t--;
 			}
-			 
-			 //trace("buffer len=",_netStream.bufferLength);
-			 trace("down==",_urlStream.bytesAvailable,'   buffer max=',_netStream.bufferTimeMax,"   buffer len=",_netStream.bufferLength);
-			 _tt = getTimer();
+			
 		}
 		
 		
@@ -202,7 +195,7 @@ package lf.media.core.control.stream
 			if(aFlag==0){
 				var at:AudioTag = _audioTagC.tagData;
 				if( at.data){
-						_netStream.appendBytes(at.data);
+					_netStream.appendBytes(at.data);
 					at.destroy();
 					_buffer.clear();
 				}
@@ -218,10 +211,10 @@ package lf.media.core.control.stream
 			if(vFlag==0){
 				var vt:VideoTag = _videoTagC.tagData;
 				if(vt.data){
-						_netStream.appendBytes(vt.data);
-						vt.destroy();
-						vt = null;
-						_buffer.clear();
+					_netStream.appendBytes(vt.data);
+					vt.destroy();
+					vt = null;
+					_buffer.clear();
 				}
 				
 			}
@@ -358,10 +351,8 @@ package lf.media.core.control.stream
 				_urlStream.removeEventListener(IOErrorEvent.IO_ERROR,ioerrorHandler);
 				_urlStream.removeEventListener(SecurityErrorEvent.SECURITY_ERROR,securityerrorHandler);
 			}
-		
+			
 		}
-		
-		
 		
 		
 		
@@ -375,6 +366,7 @@ package lf.media.core.control.stream
 		private var _videoTagC:VideoTagC = new VideoTagC();
 		private var _sourceB:ByteArray = new ByteArray();
 		private var _url:String = "";
+		private var _headTime:int  = 0;
 		
 		
 		

@@ -1,6 +1,7 @@
 package lf.media.core.video
 {
 	import flash.display.Sprite;
+	import flash.events.Event;
 	import flash.events.IOErrorEvent;
 	import flash.events.NetStatusEvent;
 	import flash.events.StatusEvent;
@@ -10,6 +11,7 @@ package lf.media.core.video
 	import flash.net.NetStream;
 	
 	import lf.media.core.control.stream.LFStream;
+	import lf.media.core.control.stream.LFStream1;
 	
 	public class LFVideo2 extends Sprite implements ILfVideo
 	{
@@ -20,7 +22,8 @@ package lf.media.core.video
 		public function LFVideo2(callback:Function)
 		{
 			_callback = callback;
-			_lfStream = new LFStream();
+			//_lfStream = new LFStream();
+			_lfStream = new LFStream1();
 			super();
 		}
 		
@@ -43,7 +46,7 @@ package lf.media.core.video
 			_netStartm.bufferTime = 1;
 			
 			_netStartm.addEventListener(StatusEvent.STATUS,netStartHandler);
-			_netStartm.addEventListener(IOErrorEvent.IO_ERROR,ioerrorHandler);
+			_lfStream.addEventListener(LFStream1.E_ERR_IO,ioerrorHandler);
 			
 			_lfStream.setNetStream( _netStartm);
 			
@@ -51,6 +54,14 @@ package lf.media.core.video
 		}
 		
 		
+		public function get totalBty():Number{
+			return _lfStream.totalBty;
+		}
+		
+		/**从发出请求 到拉到数据所用时间 (单位:ms)*/
+		public function get pullStreamTime():int{
+			return _lfStream.pullStreamTime;
+		}
 		
 		public function play(url:String):void
 		{
@@ -130,7 +141,8 @@ package lf.media.core.video
 		
 		
 		
-		protected function ioerrorHandler(event:IOErrorEvent):void{
+		protected function ioerrorHandler(event:Event):void{
+			_callback.call(null,new CallbackData("IOErrorEvent.IO_ERROR",event));
 		}
 		
 		
@@ -179,7 +191,8 @@ package lf.media.core.video
 		
 		private var _creatComplete:Boolean = false;
 		
-		private var _lfStream:LFStream;
+		//private var _lfStream:LFStream;
+		private var _lfStream:LFStream1;
 		
 		
 		
