@@ -14,6 +14,7 @@ package lf.media.core.control.stream
 	import flash.utils.ByteArray;
 	import flash.utils.Timer;
 	import flash.utils.getTimer;
+	import flash.utils.setInterval;
 	
 	import lf.media.core.model.flv.AudioTag;
 	import lf.media.core.model.flv.HeadTag;
@@ -34,7 +35,7 @@ package lf.media.core.control.stream
 		
 		
 		private const ClearCatchLimitSize:int = 20000;
-		private const MAX_LEN:int = 2;  //7  最优
+		private const MAX_LEN:int = 2.5;  //7  最优
 		
 		private const firstRead:int = 1;
 		
@@ -54,8 +55,8 @@ package lf.media.core.control.stream
 			_restartT.addEventListener(TimerEvent.TIMER,restartCheckHandler);
 		}
 		
-		
 		public function start(url:String):void{
+			var d:Date = new Date();
 			_pt = 0;
 			_url = url;
 			_headTime =new Date().getTime();
@@ -94,6 +95,14 @@ package lf.media.core.control.stream
 			if(_pt==0){
 				_pt = new Date().getTime() - _headTime;
 			}
+			
+			var b:ByteArray = new ByteArray();
+			_urlStream.readBytes(b,0,_urlStream.bytesAvailable);
+			_netStream.appendBytes(b);
+			b.clear();
+			b=null;
+			
+			
 		}
 		
 		
@@ -121,12 +130,11 @@ package lf.media.core.control.stream
 		}
 		
 		
-		
 		private var _bec:int = 0;
 		private function restartCheckHandler(event:TimerEvent):void{
-			if(_netStream.bufferLength == 0){
+			if(_netStream.bufferLength < 0.1){
 				
-				if(_bec>15){
+				if(_bec>5){
 					reStart(_url);
 					_bec = 0;
 				}
@@ -135,7 +143,6 @@ package lf.media.core.control.stream
 			}else{
 				_bec = 0;
 			}
-			
 			
 			
 			
@@ -149,12 +156,11 @@ package lf.media.core.control.stream
 			if(_netStream == null) return;
 			
 			if(_netStream.bufferLength > MAX_LEN){
-				_netStream.bufferTimeMax = 1.8;
+				_netStream.bufferTimeMax = 2;
 			}
 			
-			
+			/*
 			var t:int = _cc>50? 40:2;
-			
 			while(t>0){
 				var b:ByteArray = new ByteArray();
 				_urlStream.readBytes(b,0,_urlStream.bytesAvailable);
@@ -163,7 +169,7 @@ package lf.media.core.control.stream
 				b=null;
 				t--;
 			}
-			
+			*/
 		}
 		
 		
