@@ -156,6 +156,9 @@ package lf.media.core.data
 			return _playList.length;
 		}
 		
+		public function getStreamUrls():Array{
+			return _playList;
+		}
 		
 		/**
 		 * 通过清晰度标题获取调度地址
@@ -237,6 +240,7 @@ package lf.media.core.data
 				avInfo = _playList[i];
 				arr.push( avInfo["title"]);
 			}
+			
 			return arr;
 		}
 		

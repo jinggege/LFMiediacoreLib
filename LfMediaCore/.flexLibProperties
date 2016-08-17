@@ -25,6 +25,7 @@
     <classEntry path="lf.media.core.data.LiveCoreDataV2"/>
     <classEntry path="lf.media.core.video.LFVideo2"/>
     <classEntry path="lf.media.core.control.stream.LFStream1"/>
+    <classEntry path="lf.media.core.view.BaseVideo"/>
   </includeClasses>
   <includeResources/>
   <namespaceManifests/>

@@ -17,7 +17,10 @@ package lf.media.core.util
 		{
 			if(!isDebug) return;
 			try{
-				ExternalInterface.call("console.log","[Flash_log]:",args);
+				var date:Date = new Date();
+				var time:String = date.getHours()+":"+date.getMinutes()+":"+date.getSeconds()+":"+date.getMilliseconds();
+				ExternalInterface.call("console.log","[Flash_log "+time+"]:",args);
+				date = null;
 			}catch(error:Error){}
 			
 			args = null;

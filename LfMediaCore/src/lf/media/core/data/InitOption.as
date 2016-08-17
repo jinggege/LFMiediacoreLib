@@ -1,9 +1,6 @@
 package lf.media.core.data
 {
-	import flash.external.ExternalInterface;
 	
-	import lf.media.core.util.Console;
-	import lf.media.core.util.Util;
 
 	public class InitOption
 	{
